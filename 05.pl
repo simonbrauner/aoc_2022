@@ -4,6 +4,24 @@ use v5.36;
 
 use experimental qw{for_list};
 
+use Clone qw{clone};
+
+
+sub stack_tops(@stacks) {
+    print $_->[$_->@*-1] foreach grep { defined $_ } (@stacks);
+    say '';
+}
+
+sub move_crates($reverse, $movements, @stacks) {
+    foreach my $movement ($movements->@*) {
+        my ($count, $source, $destination) = $movement->@*;
+
+        push $stacks[$destination]->@*,
+            (pop $stacks[$source]->@*) for (1..$count);
+    }
+
+    stack_tops(@stacks);
+}
 
 my @stacks;
 my @movements;
@@ -20,20 +38,6 @@ while (my $line = <>) {
     }
 }
 
-sub move_crates($stacks, @movements) {
-    foreach my $movement (@movements) {
-        my ($count, $source, $destination) = $movement->@*;
-
-        push $stacks->[$destination]->@*,
-            (pop $stacks->[$source]->@*) for (1..$count);
-    }
-}
-
-sub stack_tops($stacks) {
-    print pop $_->@* foreach grep { defined $_ } ($stacks->@*);
-    say '';
-}
-
 while (my $line = <>) {
     chomp $line;
 
@@ -41,5 +45,5 @@ while (my $line = <>) {
     push @movements, \@movement;
 }
 
-move_crates(\@stacks, @movements);
-stack_tops(\@stacks);
+move_crates(0, \@movements, clone(\@stacks)->@*);
+move_crates(1, \@movements, @stacks);
