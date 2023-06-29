@@ -2,14 +2,16 @@
 
 use v5.36;
 
+use List::Util qw{min max};
+
 
 sub is_subrange($min_first, $max_first, $min_second, $max_second) {
     ($min_first <= $min_second && $max_first >= $max_second)
         || ($min_second <= $min_first && $max_second >= $max_first)
 }
 
-sub count_subranges(@pairs) {
-    scalar grep { is_subrange($_->@*) } @pairs;
+sub overlaps($min_first, $max_first, $min_second, $max_second) {
+    max ($min_first, $min_second) <= min ($max_first, $max_second);
 }
 
 my @pairs;
@@ -21,4 +23,5 @@ foreach my $line (<>) {
     push @pairs, \@pair;
 }
 
-say count_subranges(@pairs);
+say scalar grep { is_subrange($_->@*) } @pairs;
+say scalar grep { overlaps($_->@*) } @pairs;
