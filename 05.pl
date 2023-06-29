@@ -18,6 +18,12 @@ sub move_crates($reverse, $movements, @stacks) {
 
         push $stacks[$destination]->@*,
             (pop $stacks[$source]->@*) for (1..$count);
+
+        if ($reverse) {
+            push $stacks[$destination]->@*, $_
+                foreach reverse
+                splice $stacks[$destination]->@*, $stacks[$destination]->@* - $count;
+        }
     }
 
     stack_tops(@stacks);
