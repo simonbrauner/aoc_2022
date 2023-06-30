@@ -2,7 +2,7 @@
 
 use v5.36;
 
-use List::Util qw{sum};
+use List::Util qw{sum min};
 
 
 sub sizes_of_dirs($commands, $path) {
@@ -31,11 +31,12 @@ sub sizes_of_dirs($commands, $path) {
     return %directory_sizes;
 }
 
-sub sum_of_dirs($commands) {
-    shift $commands->@* for (1..2);
+sub sum_of_dirs(%dirs) {
+    sum grep { $_ <= 100000 } values %dirs;
+}
 
-    my %dirs = (sizes_of_dirs($commands, '/'));
-    return sum grep { $_ <= 100000 } values %dirs;
+sub dir_to_delete(%dirs) {
+    min grep { $dirs{'/'} - $_ <= 40000000 } values %dirs;
 }
 
 my @commands;
@@ -46,4 +47,8 @@ foreach my $line (<>) {
     push @commands, $line;
 }
 
-say sum_of_dirs(\@commands);
+shift @commands for (1..2);
+my %dirs = sizes_of_dirs(\@commands, '/');
+
+say sum_of_dirs(%dirs);
+say dir_to_delete(%dirs);
