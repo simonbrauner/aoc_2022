@@ -14,20 +14,23 @@ sub move_head($head, $direction) {
     $head->{$_} += $moves{$direction}->{$_} foreach ('x', 'y');
 }
 
-sub tail_direction($head, $tail) {
+sub move_tail($head, $tail) {
     my ($dx, $dy) = map { $head->{$_} - $tail->{$_} } ('x', 'y');
 
-    return 'R' if $dx == 2;
-    return 'L' if $dx == -2;
-    return 'U' if $dy == 2;
-    return 'D' if $dy == -2;
-}
+    if (abs($dx) == 2) {
+        $tail->{x} += $dx / 2;
+    }
+    if (abs($dy) == 2) {
+        $tail->{y} += $dy / 2;
+    }
 
-sub move_tail($head, $tail) {
-    my $direction = tail_direction($head, $tail);
-    return if !$direction;
-
-    $tail->{$_} = $head->{$_} - $moves{$direction}->{$_} foreach ('x', 'y');
+    if (abs($dx) != abs($dy)) {
+        if (abs($dx) == 2) {
+            $tail->{y} = $head->{y};
+        } elsif (abs($dy) == 2) {
+            $tail->{x} = $head->{x};
+        }
+    }
 }
 
 sub unique_positions($knot_count, @movements) {
