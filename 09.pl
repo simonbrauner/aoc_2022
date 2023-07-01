@@ -2,6 +2,8 @@
 
 use v5.36;
 
+use List::Util qw{sum};
+
 
 my %moves = (R => { x => 1, y => 0 },
              L => { x => -1, y => 0 },
@@ -10,6 +12,13 @@ my %moves = (R => { x => 1, y => 0 },
 
 sub move_head($head, $direction) {
     $head->{$_} += $moves{$direction}->{$_} foreach ('x', 'y');
+}
+
+sub move_tail($head, $tail, $direction) {
+    return if abs($head->{x} - $tail->{x}) <= 1
+        && abs($head->{y} - $tail->{y}) <= 1;
+
+    $tail->{$_} = $head->{$_} - $moves{$direction}->{$_} foreach ('x', 'y');
 }
 
 sub unique_positions(@movements) {
@@ -21,11 +30,13 @@ sub unique_positions(@movements) {
     foreach my $movement (@movements) {
         do {
             move_head($head, $movement->{direction});
+            move_tail($head, $tail, $movement->{direction});
+
+            $positions{$tail->{x} . ',' . $tail->{y}} = 1;
         } for (1..$movement->{steps});
     }
 
-    say $head->{x};
-    say $head->{y};
+    return \%positions;
 }
 
 my @movements;
@@ -36,4 +47,4 @@ foreach my $line (<>) {
     push @movements, { direction => $1, steps => $2 };
 }
 
-unique_positions(@movements);
+say sum values unique_positions(@movements)->%*;
