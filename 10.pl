@@ -22,6 +22,28 @@ sub signal_strengths(@program) {
     return @strengths;
 }
 
+sub crt(@program) {
+    my @lines;
+    my $line = '';
+    my $register = 1;
+
+    my $cycles = 0;
+    foreach my $instruction (@program) {
+        $line .= abs(($cycles % 40) - $register) <= 1 ? '#' : '.';
+
+        $register += $instruction if defined $instruction;
+
+        $cycles++;
+
+        if ($cycles % 40 == 0) {
+            push @lines, $line;
+            $line = '';
+        }
+    }
+
+    return @lines;
+}
+
 my @program;
 
 foreach my $line (<>) {
@@ -30,3 +52,4 @@ foreach my $line (<>) {
 }
 
 say sum signal_strengths(@program);
+say foreach crt(@program);
