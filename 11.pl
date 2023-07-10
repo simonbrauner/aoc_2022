@@ -6,6 +6,8 @@ use List::Util qw{product};
 
 use List::MoreUtils qw{mesh};
 
+use Clone qw{clone};
+
 
 sub create_operation($operation) {
     my @keys = qw{left operator right};
@@ -54,6 +56,12 @@ sub two_most_active_monkeys(@monkeys) {
     product ((sort { $b <=> $a } map { $_->{inspected} } @monkeys)[0..1]);
 }
 
+sub simulate_monkeys($rounds, @monkeys) {
+    round(@monkeys) foreach (1..$rounds);
+
+    return two_most_active_monkeys(@monkeys);
+}
+
 my @monkeys;
 
 my $file_content = join '', <>;
@@ -66,5 +74,4 @@ while ($file_content =~ /Monkey\s\d+:\s+
     push @monkeys, Monkey->new(@{^CAPTURE});
 }
 
-round(@monkeys) foreach (1..20);
-say two_most_active_monkeys(@monkeys);
+say simulate_monkeys(20, clone(\@monkeys)->@*);
