@@ -30,34 +30,34 @@ sub Monkey::new($class, $items, $operation, $test, $true, $false) {
     }, $class;
 }
 
-sub Monkey::process_item($self, $item, @monkeys) {
+sub Monkey::process_item($self, $item, $operation, @monkeys) {
     my ($left, $right) = map { worry_level($self->{operation}{$_}, $item) } qw{left right};
     $item = $self->{operation}{operator} eq '+' ? $left + $right : $left * $right;
 
     $self->{inspected}++;
 
-    $item = int($item / 3);
+    $item = $operation->($item);
 
     push $monkeys[$item % $self->{divisible_by} == 0
                   ? $self->{true} : $self->{false}]->{items}->@*, $item;
 }
 
-sub Monkey::turn($self, @monkeys) {
+sub Monkey::turn($self, $operation, @monkeys) {
     while (my $item = shift $self->{items}->@*) {
-        $self->process_item($item, @monkeys);
+        $self->process_item($item, $operation, @monkeys);
     }
 }
 
-sub round(@monkeys) {
-    $_->turn(@monkeys) foreach @monkeys;
+sub round($operation, @monkeys) {
+    $_->turn($operation, @monkeys) foreach @monkeys;
 }
 
 sub two_most_active_monkeys(@monkeys) {
     product ((sort { $b <=> $a } map { $_->{inspected} } @monkeys)[0..1]);
 }
 
-sub simulate_monkeys($rounds, @monkeys) {
-    round(@monkeys) foreach (1..$rounds);
+sub simulate_monkeys($rounds, $operation, @monkeys) {
+    round($operation, @monkeys) foreach (1..$rounds);
 
     return two_most_active_monkeys(@monkeys);
 }
@@ -74,4 +74,4 @@ while ($file_content =~ /Monkey\s\d+:\s+
     push @monkeys, Monkey->new(@{^CAPTURE});
 }
 
-say simulate_monkeys(20, clone(\@monkeys)->@*);
+say simulate_monkeys(20, sub($a) { int($a / 3) }, clone(\@monkeys)->@*);
