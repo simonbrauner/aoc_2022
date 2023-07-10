@@ -30,11 +30,16 @@ sub Monkey::new($class, $items, $operation, $test, $true, $false) {
     }, $class;
 }
 
-sub Monkey::process_item($self, $item, $operation, @monkeys) {
+sub Monkey::inspect_item($self, $item) {
     my ($left, $right) = map { worry_level($self->{operation}{$_}, $item) } qw{left right};
-    $item = $self->{operation}{operator} eq '+' ? $left + $right : $left * $right;
 
     $self->{inspected}++;
+
+    return $self->{operation}{operator} eq '+' ? $left + $right : $left * $right;
+}
+
+sub Monkey::process_item($self, $item, $operation, @monkeys) {
+    $item = $self->inspect_item($item);
 
     $item = $operation->($item);
 
