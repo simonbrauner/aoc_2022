@@ -34,7 +34,7 @@ sub unvisited_neighbors($position, $rows, $visited) {
         if ((0 <= $nx < $rows->[0]->@*)
                 && (0 <= $ny < $rows->@*)
                 && !exists $visited->{$new_position}
-                && height($rows->[$y][$x]) + 1 >= height($rows->[$ny][$nx])) {
+                && height($rows->[$y][$x]) - 1 <= height($rows->[$ny][$nx])) {
             $visited->{$new_position} = undef;
             push @neighbors, $new_position;
         }
@@ -43,12 +43,16 @@ sub unvisited_neighbors($position, $rows, $visited) {
     return @neighbors;
 }
 
-sub shortest_path(@rows) {
-    my $start = find_letter('S', @rows);
+sub is_goal($position, $goal, @rows) {
+    my ($x, $y) = split ':', $position;
+    return $rows[$y]->[$x] =~ $goal;
+}
+
+sub shortest_path($goal, @rows) {
     my $end = find_letter('E', @rows);
 
-    my @queue = ([find_letter('S', @rows), 0]);
-    my %visited = ($start => undef);
+    my @queue = ([$end, 0]);
+    my %visited = ($end => undef);
 
     while (my $current = shift @queue) {
         my ($position, $distance) = $current->@*;
@@ -56,7 +60,7 @@ sub shortest_path(@rows) {
         push @queue, [$_, $distance + 1]
             foreach unvisited_neighbors($position, \@rows, \%visited);
 
-        return $distance if $position eq $end;
+        return $distance if is_goal($position, $goal, @rows);
     }
 }
 
@@ -69,4 +73,5 @@ foreach my $line (<>) {
     push @rows, \@row;
 }
 
-say shortest_path(@rows);
+say shortest_path(qr{S}, @rows);
+say shortest_path(qr{S|a}, @rows);
