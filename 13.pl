@@ -11,21 +11,25 @@ sub replace($value) {
     ref $value eq '' ? [$value] : $value;
 }
 
-sub is_pair_valid($left, $right) {
-    if (all { ref $_ eq '' } ($left, $right)) {
+sub is_pair_valid {
+    my ($left, $right) = @_;
+
+    if (all { ref $_ eq '' } @_) {
         return if $left == $right;
         return $left < $right;
 
-    } elsif (all { ref $_ eq 'ARRAY' } ($left, $right)) {
-        for (my $index = 0; $index < min scalar $left->@*, scalar $right->@*; $index++) {
-            my $result = is_pair_valid($left->[$index], $right->[$index]);
+    } elsif (all { ref $_ eq 'ARRAY' } @_) {
+        my @lengths = map { scalar $_->@* } @_;
+
+        for (my $index = 0; $index < min @lengths; $index++) {
+            my $result = is_pair_valid(map { $_->[$index] } @_);
             return $result if defined $result;
         }
 
-        return is_pair_valid(scalar $left->@*, scalar $right->@*);
+        return is_pair_valid(@lengths);
     }
 
-    return is_pair_valid(map { replace($_) } ($left, $right));
+    return is_pair_valid(map { replace($_) } @_);
 }
 
 sub sum_of_valid_indices(@pairs) {
