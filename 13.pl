@@ -11,25 +11,24 @@ sub replace($value) {
     ref $value eq '' ? [$value] : $value;
 }
 
-sub is_pair_valid {
+sub compare_pair {
     my ($left, $right) = @_;
 
-    if (all { ref $_ eq '' } @_) {
-        return if $left == $right;
-        return $left < $right;
+    return $left - $right
+        if all { ref $_ eq '' } @_;
 
-    } elsif (all { ref $_ eq 'ARRAY' } @_) {
+    if (all { ref $_ eq 'ARRAY' } @_) {
         my @lengths = map { scalar $_->@* } @_;
 
         for (my $index = 0; $index < min @lengths; $index++) {
-            my $result = is_pair_valid(map { $_->[$index] } @_);
-            return $result if defined $result;
+            my $result = compare_pair(map { $_->[$index] } @_);
+            return $result if $result != 0;
         }
 
-        return is_pair_valid(@lengths);
+        return compare_pair(@lengths);
     }
 
-    return is_pair_valid(map { replace($_) } @_);
+    return compare_pair(map { replace($_) } @_);
 }
 
 sub sum_of_valid_indices(@packets) {
@@ -38,7 +37,7 @@ sub sum_of_valid_indices(@packets) {
 
     foreach my ($left, $right) (@packets) {
         $index++;
-        $sum += $index if is_pair_valid($left, $right);
+        $sum += $index if compare_pair($left, $right) < 0;
     }
 
     return $sum;
