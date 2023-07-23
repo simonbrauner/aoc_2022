@@ -2,7 +2,7 @@
 
 use v5.36;
 
-use experimental qw{for_list builtin};
+use experimental qw{for_list};
 
 use List::Util qw{all min};
 
@@ -32,11 +32,13 @@ sub is_pair_valid {
     return is_pair_valid(map { replace($_) } @_);
 }
 
-sub sum_of_valid_indices(@pairs) {
+sub sum_of_valid_indices(@packets) {
     my $sum = 0;
+    my $index = 0;
 
-    foreach my ($index, $pair) (builtin::indexed @pairs) {
-        $sum += $index + 1 if is_pair_valid($pair->@*);
+    foreach my ($left, $right) (@packets) {
+        $index++;
+        $sum += $index if is_pair_valid($left, $right);
     }
 
     return $sum;
@@ -45,8 +47,8 @@ sub sum_of_valid_indices(@pairs) {
 my @packets;
 
 my $file_content = join '', <>;
-while ($file_content =~ /([^\n]*)\n([^\n]*)\n\n?/g) {
-    push @packets, [ eval $1, eval $2 ];
+while ($file_content =~ /^([\d,\[\]]+)$/gm) {
+    push @packets, eval $1;
 }
 
 say sum_of_valid_indices(@packets);
