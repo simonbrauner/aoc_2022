@@ -4,7 +4,9 @@ use v5.36;
 
 use experimental qw{for_list};
 
-use List::Util qw{all min};
+use List::Util qw{all any min};
+
+use Data::Compare;
 
 
 sub replace($value) {
@@ -43,6 +45,26 @@ sub sum_of_valid_indices(@packets) {
     return $sum;
 }
 
+my @dividers = ([[2]], [[6]]);
+
+sub is_divider($packet) {
+    any { Compare($packet, $_) } @dividers;
+}
+
+sub product_of_divider_indices(@packets) {
+    @packets = sort { compare_pair($a, $b) } (@packets, @dividers);
+
+    my $product = 1;
+    my $index = 0;
+
+    foreach my $packet (@packets) {
+        $index++;
+        $product *= $index if is_divider($packet);
+    }
+
+    return $product;
+}
+
 my @packets;
 
 my $file_content = join '', <>;
@@ -51,3 +73,4 @@ while ($file_content =~ /^([\d,\[\]]+)$/gm) {
 }
 
 say sum_of_valid_indices(@packets);
+say product_of_divider_indices(@packets);
