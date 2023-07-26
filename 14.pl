@@ -39,6 +39,31 @@ sub create_map(@rocks) {
     return %map;
 }
 
+sub fall_sand($map) {
+    my ($x, $y) = (500, 0);
+
+  OUTER: while (1) {
+      $y++;
+
+      foreach my $dx (0, -1, 2) {
+          $x += $dx;
+
+          return if !exists $map->{"$x,$y"};
+          next OUTER if ($map->{"$x,$y"} eq '.');
+      }
+
+      return $map->{($x - 1) . ',' . ($y - 1)} = 'o';
+  }
+}
+
+sub come_to_rest(%map) {
+    my $counter = 0;
+
+    $counter++ while fall_sand(\%map);
+
+    return $counter;
+}
+
 my @rocks;
 
 foreach my $line (<>) {
@@ -49,3 +74,5 @@ foreach my $line (<>) {
 }
 
 my %map = create_map(@rocks);
+
+say come_to_rest(%map);
