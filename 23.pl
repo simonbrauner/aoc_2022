@@ -9,7 +9,25 @@ use List::Util qw{min max};
 
 my %directions = (N => [0, 1], S => [0, -1], W => [-1, 0], E => [1, 0], 0 => [0, 0]);
 
+my @priorities = ([qw{N NE NW}], [qw{S SE SW}], [qw{W NW SW}], [qw{E NE SE}]);
+
+sub elf_active($elves, $coords) {
+    foreach my $direction (map { $_->@* } @priorities) {
+        my ($x, $y) = split ',', $coords;
+
+        foreach my $orthogonal (split //, $direction) {
+            $x += $directions{$orthogonal}->[0];
+            $y += $directions{$orthogonal}->[1];
+        }
+
+        return 1 if exists $elves->{"$x,$y"};
+    }
+
+    return 0;
+}
+
 sub turn($elves) {
+    my @active = grep { elf_active($elves, $_) } keys $elves->%*;
 }
 
 sub rectangle_side($elves, $regex) {
