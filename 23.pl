@@ -7,6 +7,8 @@ use experimental qw{for_list builtin};
 use List::Util qw{min max any all};
 use List::MoreUtils qw{firstidx};
 
+use Clone qw{clone};
+
 
 my %directions = (N => [0, -1], S => [0, 1], W => [-1, 0], E => [1, 0], 0 => [0, 0]);
 
@@ -38,12 +40,12 @@ sub tile_free($elves, $coords, $direction) {
     return !exists $elves->{"$x,$y"};
 }
 
-sub elf_active($elves, $coords) {
-    any { !tile_free($elves, $coords, $_) } (map { $_->@* } @priorities)
+sub elf_active($elves, $priorities, $coords) {
+    any { !tile_free($elves, $coords, $_) } (map { $_->@* } $priorities->@*)
 }
 
-sub create_proposal($elves, $coords) {
-    foreach my $priority (@priorities) {
+sub create_proposal($elves, $priorities, $coords) {
+    foreach my $priority ($priorities->@*) {
         if (all { tile_free($elves, $coords, $_) } $priority->@*) {
             my ($x, $y) = split ',', $coords;
 
@@ -57,29 +59,34 @@ sub create_proposal($elves, $coords) {
     return undef;
 }
 
-sub turn($elves) {
-    my @active = grep { elf_active($elves, $_) } keys $elves->%*;
-    my @passive = grep { !elf_active($elves, $_) } keys $elves->%*;
-    my %proposals = map { $_ => create_proposal($elves, $_) } @active;
+sub turn($elves, $priorities, $end = undef) {
+    my @active = grep { elf_active($elves, $priorities, $_) } keys $elves->%*;
+    my @passive = grep { !elf_active($elves, $priorities, $_) } keys $elves->%*;
 
+    if (@active == 0) {
+        $end->$* = 1 if defined $end;
+        return;
+    }
+
+    my %proposals = map { $_ => create_proposal($elves, $priorities, $_) } @active;
     my %proposal_counts;
     $proposal_counts{$_->{coords}}++ foreach grep { defined $_ } values %proposals;
 
     my %new_elves;
-    my $first_index = @priorities;
+    my $first_index = $priorities->@*;
     foreach my ($old, $new) (%proposals) {
         if (!defined $new || $proposal_counts{$new->{coords}} != 1) {
             $new_elves{$old} = undef;
         } else {
             $new_elves{$new->{coords}} = undef;
             $first_index = min($first_index,
-                               firstidx { $_->[0] eq $new->{orthogonal} } @priorities);
+                               firstidx { $_->[0] eq $new->{orthogonal} } $priorities->@*);
         }
     }
 
     $elves->%* = (%new_elves, map { $_ => undef } @passive);
 
-    push @priorities, (splice @priorities, $first_index, 1);
+    push $priorities->@*, (splice $priorities->@*, $first_index, 1);
 }
 
 sub rectangle_side($elves, $regex) {
@@ -87,19 +94,19 @@ sub rectangle_side($elves, $regex) {
     return max(@coords) - min(@coords) + 1;
 }
 
-sub empty_ground_tiles($elves) {
-    turn($elves) for (1..10);
+sub empty_ground_tiles($elves, $priorities) {
+    turn($elves, $priorities) for (1..10);
 
     return rectangle_side($elves, qr{(.*),}) * rectangle_side($elves, qr{,(.*)})
         - keys $elves->%*;
 }
 
-sub passive_turn_number($elves) {
+sub passive_turn_number($elves, $priorities) {
     my $turn_number = 0;
 
     my $end = 0;
     while (!$end) {
-        turn($elves, \$end);
+        turn($elves, $priorities, \$end);
         $turn_number++;
     }
 
@@ -117,5 +124,5 @@ foreach my ($y, $row) (builtin::indexed <>) {
     }
 }
 
-say empty_ground_tiles($elves);
-say passive_turn_number($elves);
+say empty_ground_tiles(clone($elves), clone(\@priorities));
+say passive_turn_number($elves, \@priorities);
