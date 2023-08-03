@@ -12,6 +12,21 @@ my %directions = (N => [0, -1], S => [0, 1], W => [-1, 0], E => [1, 0], 0 => [0,
 
 my @priorities = ([qw{N NE NW}], [qw{S SE SW}], [qw{W NW SW}], [qw{E NE SE}]);
 
+sub print_elves($elves) {
+    my @x_coords = map { $_ =~ /(.*),/; $1 } keys $elves->%*;
+    my @y_coords = map { $_ =~ /,(.*)/; $1 } keys $elves->%*;
+
+    for (my $y = min @y_coords; $y <= max @y_coords; $y++) {
+        for (my $x = min @x_coords; $x <= max @x_coords; $x++) {
+            print exists $elves->{"$x,$y"} ? '#' : '.';
+        }
+
+        say '';
+    }
+
+    say '';
+}
+
 sub tile_free($elves, $coords, $direction) {
     my ($x, $y) = split ',', $coords;
 
