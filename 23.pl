@@ -94,6 +94,18 @@ sub empty_ground_tiles($elves) {
         - keys $elves->%*;
 }
 
+sub passive_turn_number($elves) {
+    my $turn_number = 0;
+
+    my $end = 0;
+    while (!$end) {
+        turn($elves, \$end);
+        $turn_number++;
+    }
+
+    return $turn_number;
+}
+
 my $elves = {};
 
 foreach my ($y, $row) (builtin::indexed <>) {
@@ -106,3 +118,4 @@ foreach my ($y, $row) (builtin::indexed <>) {
 }
 
 say empty_ground_tiles($elves);
+say passive_turn_number($elves);
