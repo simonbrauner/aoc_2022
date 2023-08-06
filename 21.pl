@@ -13,6 +13,15 @@ sub eval_number($numbers, $monkey) {
     return $functions->{$expr[1]}->(map { eval_number($numbers, $_) } ($expr[0], $expr[2]));
 }
 
+sub string_expr($numbers, $monkey) {
+    my @expr = $numbers->{$monkey}->@*;
+    return $expr[0] if @expr == 1;
+
+    my ($left, $right) = map { string_expr($numbers, $_) } ($expr[0], $expr[2]);
+
+    return "($left $expr[1] $right)";
+}
+
 my $numbers = {};
 
 my $file_content = join '', <>;
@@ -22,3 +31,6 @@ while ($file_content =~ /^(\w+): (.+)$/gm) {
 }
 
 say eval_number($numbers, 'root');
+$numbers->{root}[1] = '=';
+$numbers->{humn}->@* = '?';
+say string_expr($numbers, 'root');
