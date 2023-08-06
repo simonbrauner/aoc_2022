@@ -41,5 +41,5 @@ while ($file_content =~ /^(\w+): (.+)$/gm) {
 
 say eval_number($numbers, 'root');
 $numbers->{root}[1] = '=';
-$numbers->{humn}->@* = '?';
-say string_expr($numbers, 'root');
+$numbers->{humn}->@* = qw{x};
+say string_expr($numbers, 'root');  # https://quickmath.com/
