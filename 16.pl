@@ -43,18 +43,22 @@ sub create_simplified_cave($cave) {
     return $simplified;
 }
 
-sub most_pressure($cave, $minutes, $pressure, $current, $visited) {
+sub most_pressure($cave, $minutes, $pressure, $current, $visited, $reset = 0) {
     my @subresults = ($pressure);
 
     $visited->{$current} = undef;
 
     foreach my ($tunnel, $distance) ($cave->{$current}{tunnels}->@*) {
-        next if $minutes <= $distance || exists $visited->{$tunnel};
+        next if ($minutes - $reset) <= $distance || exists $visited->{$tunnel};
 
         my $new_time = $minutes - $distance - 1;
-        my $new_pressure = $pressure + $new_time * $cave->{$tunnel}{flow_rate};
+        my $new_pressure = $pressure + ($new_time - $reset) * $cave->{$tunnel}{flow_rate};
 
-        push @subresults, most_pressure($cave, $new_time, $new_pressure, $tunnel, $visited);
+        push @subresults, most_pressure($cave, $new_time, $new_pressure, $tunnel, $visited, $reset);
+    }
+
+    if ($reset != 0) {
+        push @subresults, most_pressure($cave, $reset, $pressure, 'AA', $visited, 0);
     }
 
     delete $visited->{$current};
@@ -72,4 +76,6 @@ while ($file_content =~ /^Valve\ ([A-Z]+)\ has\ flow\ rate=(\d+);
 }
 
 my $simplified_cave = create_simplified_cave($cave);
+
 say most_pressure($simplified_cave, 30, 0, 'AA', {});
+say most_pressure($simplified_cave, 26 * 2, 0, 'AA', {}, 26);
