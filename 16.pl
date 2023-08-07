@@ -2,6 +2,10 @@
 
 use v5.36;
 
+use experimental qw{for_list};
+
+use List::Util qw{max};
+
 
 sub is_simple($cave, $valve) {
     $valve eq 'AA' || $cave->{$valve}{flow_rate} != 0
@@ -39,6 +43,25 @@ sub create_simplified_cave($cave) {
     return $simplified;
 }
 
+sub most_pressure($cave, $minutes, $pressure, $current, $visited) {
+    my @subresults = ($pressure);
+
+    $visited->{$current} = undef;
+
+    foreach my ($tunnel, $distance) ($cave->{$current}{tunnels}->@*) {
+        next if $minutes <= $distance || exists $visited->{$tunnel};
+
+        my $new_time = $minutes - $distance - 1;
+        my $new_pressure = $pressure + $new_time * $cave->{$tunnel}{flow_rate};
+
+        push @subresults, most_pressure($cave, $new_time, $new_pressure, $tunnel, $visited);
+    }
+
+    delete $visited->{$current};
+
+    return max @subresults;
+}
+
 my $cave = {};
 
 my $file_content = join '', <>;
@@ -49,3 +72,4 @@ while ($file_content =~ /^Valve\ ([A-Z]+)\ has\ flow\ rate=(\d+);
 }
 
 my $simplified_cave = create_simplified_cave($cave);
+say most_pressure($simplified_cave, 30, 0, 'AA', {});
