@@ -78,7 +78,8 @@ sub create_graph($valley) {
         add_edges(@part_of_arguments, 0, -1);
         for my $y (0..$valley->@*-1) {
             for my $x (0..$valley->[0]->@*-1) {
-                add_edges(@part_of_arguments, $x, $y);
+                add_edges(@part_of_arguments, $x, $y)
+                    if $valley->[$y][$x]->@* == 0;
             }
         }
 
@@ -118,4 +119,6 @@ foreach my ($y, $row) (builtin::indexed <>) {
 }
 pop $valley->@*;
 
-say shortest_path(create_graph($valley), '0,0,-1');
+my $graph = create_graph($valley);
+
+say shortest_path($graph, '0,0,-1');
