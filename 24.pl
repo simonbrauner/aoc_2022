@@ -4,6 +4,8 @@ use v5.36;
 
 use experimental qw{for_list builtin};
 
+use List::Util qw{first};
+
 
 my %movements = ('<' => [-1, 0], '>' => [1, 0],
                  '^' => [0, -1], 'v' => [0, 1]);
@@ -15,6 +17,10 @@ sub print_valley($valley) {
         }
         say '';
     }
+}
+
+sub lcm($a, $b) {
+    first { $_ % $a == 0 && $_ % $b == 0 } (1..$a*$b);
 }
 
 sub next_valley($valley) {
@@ -63,7 +69,7 @@ sub add_edges($next_valley, $graph, $from, $to, $x, $y) {
 sub create_graph($valley) {
     my $graph = {};
 
-    my $state_count = $valley->@* * $valley->[0]->@*;
+    my $state_count = lcm(scalar $valley->@*, scalar $valley->[0]->@*);
     for my $layer (1..$state_count) {
         my $next_valley = next_valley($valley);
 
@@ -82,6 +88,23 @@ sub create_graph($valley) {
     return $graph;
 }
 
+sub shortest_path($graph, $start) {
+    my @queue = ($start, 0);
+    my %seen;
+
+    while (@queue) {
+        my ($current, $path) = map { shift @queue } (1..2);
+        return $path if $current eq 'goal';
+
+        foreach my $neighbor ($graph->{$current}->@*) {
+            next if exists $seen{$neighbor};
+            $seen{$neighbor} = undef;
+
+            push @queue, $neighbor, $path + 1;
+        }
+    }
+}
+
 my $valley = [];
 
 foreach my ($y, $row) (builtin::indexed <>) {
@@ -95,4 +118,4 @@ foreach my ($y, $row) (builtin::indexed <>) {
 }
 pop $valley->@*;
 
-my $graph = create_graph($valley);
+say shortest_path(create_graph($valley), '0,0,-1');
