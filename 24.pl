@@ -42,14 +42,15 @@ sub next_valley($valley) {
     return $next_valley;
 }
 
-sub accessible($valley, $x, $y, $new_x, $new_y) {
-    return 1 if $x == $new_x == 0 && $y == $new_y == -1;
+sub accessible($valley, $start, $end, $x, $y) {
+    return 1 if ($x == $start->[0] && $y == $start->[1])
+        || ($x == $end->[0] && $y == $end->[1]);
 
-    return 0 <= $new_x < $valley->[0]->@* && 0 <= $new_y < $valley->@*
-        && $valley->[$new_y][$new_x]->@* == 0;
+    return 0 <= $x < $valley->[0]->@* && 0 <= $y < $valley->@*
+        && $valley->[$y][$x]->@* == 0;
 }
 
-sub add_edges($next_valley, $graph, $from, $to, $x, $y) {
+sub add_edges($next_valley, $graph, $from, $to, $start, $end, $x, $y) {
     my $edges = [];
 
     for my $movement (values %movements, [0, 0]) {
@@ -57,25 +58,24 @@ sub add_edges($next_valley, $graph, $from, $to, $x, $y) {
         my $new_y = $y + $movement->[1];
 
         push $edges->@*, "$to,$new_x,$new_y"
-            if accessible($next_valley, $x, $y, $new_x, $new_y);
+            if accessible($next_valley, $start, $end, $new_x, $new_y);
     }
-
-    unshift $edges->@*, 'goal'
-        if $x == $next_valley->[0]->@*-1 && $y == $next_valley->@*-1;
 
     $graph->{"$from,$x,$y"} = $edges;
 }
 
-sub create_graph($valley) {
+sub create_graph($valley, $start, $end) {
     my $graph = {};
 
     my $state_count = lcm(scalar $valley->@*, scalar $valley->[0]->@*);
     for my $layer (1..$state_count) {
         my $next_valley = next_valley($valley);
 
-        my @part_of_arguments = ($next_valley, $graph, $layer - 1, $layer % $state_count);
+        my @part_of_arguments = ($next_valley, $graph, $layer - 1,
+                                 $layer % $state_count, $start, $end);
 
-        add_edges(@part_of_arguments, 0, -1);
+        add_edges(@part_of_arguments, $start->@*);
+        add_edges(@part_of_arguments, $end->@*);
         for my $y (0..$valley->@*-1) {
             for my $x (0..$valley->[0]->@*-1) {
                 add_edges(@part_of_arguments, $x, $y)
@@ -89,21 +89,42 @@ sub create_graph($valley) {
     return $graph;
 }
 
-sub shortest_path($graph, $start) {
-    my @queue = ($start, 0);
-    my %seen;
+sub start_location($value, $path, $state_count) {
+    ($path % $state_count) . ',' . join ',', $value->@*;
+}
 
-    while (@queue) {
-        my ($current, $path) = map { shift @queue } (1..2);
-        return $path if $current eq 'goal';
+sub is_end($value, $end) {
+    $end = join ',', $end->@*;
 
-        foreach my $neighbor ($graph->{$current}->@*) {
-            next if exists $seen{$neighbor};
-            $seen{$neighbor} = undef;
+    return $value =~ /\d+,$end/;
+}
 
-            push @queue, $neighbor, $path + 1;
-        }
-    }
+sub shortest_path($valley, $graph, @goals) {
+    my $path = 0;
+    my $state_count = lcm(scalar $valley->@*, scalar $valley->[0]->@*);
+
+  OUTER: while (@goals > 1) {
+      my @queue = (start_location(shift @goals, $path, $state_count), 0);
+      my %seen;
+
+      while (@queue) {
+          my ($current, $length) = map { shift @queue } (1..2);
+          if (is_end($current, $goals[0])) {
+              $path += $length;
+              next OUTER;
+          }
+          return $length if is_end($current, $goals[0]);
+
+          foreach my $neighbor ($graph->{$current}->@*) {
+              next if exists $seen{$neighbor};
+              $seen{$neighbor} = undef;
+
+              push @queue, $neighbor, $length + 1;
+          }
+      }
+  }
+
+    return $path;
 }
 
 my $valley = [];
@@ -119,6 +140,10 @@ foreach my ($y, $row) (builtin::indexed <>) {
 }
 pop $valley->@*;
 
-my $graph = create_graph($valley);
+my $start = [0, -1];
+my $end = [$valley->[0]->@*-1, scalar $valley->@*];
 
-say shortest_path($graph, '0,0,-1');
+my $graph = create_graph($valley, $start, $end);
+
+say shortest_path($valley, $graph, $start, $end);
+say shortest_path($valley, $graph, ($start, $end) x 2);
