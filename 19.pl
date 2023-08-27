@@ -2,6 +2,14 @@
 
 use v5.36;
 
+use List::Util qw{sum};
+
+use Clone qw{clone};
+
+
+my $initial_state = { ore => 0, clay => 0, obsidian => 0, geode => 0,
+                      ore_robots => 1, clay_robots => 0,
+                      obsidian_robots => 0, geode_robots => 0 };
 
 sub parse_blueprints($numbers) {
     my $blueprints = [];
@@ -23,6 +31,22 @@ sub parse_blueprints($numbers) {
     return $blueprints;
 }
 
+sub max_geodes($blueprint, $state, $minute) {
+
+}
+
+sub quality_levels($blueprints) {
+    my @levels;
+    my $id = 0;
+
+    foreach my $blueprint ($blueprints->@*) {
+        push @levels,
+            ++$id * max_geodes($blueprint, clone($initial_state), 1);
+    }
+
+    return @levels;
+}
+
 my $numbers = [];
 
 my $file_content = join '', <>;
@@ -31,3 +55,5 @@ while ($file_content =~ /(\d+)/g) {
 }
 
 my $blueprints = parse_blueprints($numbers);
+
+say sum quality_levels($blueprints);
