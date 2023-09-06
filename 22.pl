@@ -28,8 +28,7 @@ sub get_coords($map, $x_y, $value = undef) {
     return @result;
 }
 
-sub substitute_position($coords, $direction, $map) {
-    my ($x, $y) = $coords->@*;
+sub wrap_2d($coords, $direction, $map) {
     if ($direction eq 'R') {
         $coords->[0] = min get_coords($map, 'x', $coords->[1]);
     } elsif ($direction eq 'L') {
@@ -41,11 +40,11 @@ sub substitute_position($coords, $direction, $map) {
     }
 }
 
-sub move($x_ref, $y_ref, $direction, $map) {
+sub move($x_ref, $y_ref, $direction, $map, $wrap) {
     my $coords = [ map { $_->$* } ($x_ref, $y_ref) ];
     $coords->[$_] += $moves->{$direction}->[$_] for (0..1);
 
-    substitute_position($coords, $direction, $map)
+    $wrap->($coords, $direction, $map)
         if !exists $map->{$coords->[0] . ',' . $coords->[1]};
 
     if ($map->{$coords->[0] . ',' . $coords->[1]} ne '#') {
@@ -54,14 +53,14 @@ sub move($x_ref, $y_ref, $direction, $map) {
     }
 }
 
-sub final_password($map, $path) {
+sub final_password($map, $path, $wrap) {
     my $y = min get_coords($map, 'y');
     my $x = min get_coords($map, 'x', $y);
     my $direction = 'R';
 
     while ($path =~ /((?:\d+)|(?:R|L))/g) {
         if (looks_like_number($1)) {
-            move(\$x, \$y, $direction, $map) for (1..$1);
+            move(\$x, \$y, $direction, $map, $wrap) for (1..$1);
         } else {
             $direction = $turns->{$1}{$direction};
         }
@@ -87,4 +86,4 @@ while ((my $line = <>) ne "\n") {
 my $path = <>;
 chomp $path;
 
-say final_password($map, $path);
+say final_password($map, $path, \&wrap_2d);
